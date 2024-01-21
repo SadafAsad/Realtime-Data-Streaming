@@ -2,12 +2,11 @@ from datetime import datetime
 from datetime import timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
 
 #DAG arguments block
 default_args = {
     'owner': 'Sadaf Asadollahi',
-    'start_date': days_ago(0),
+    'start_date': datetime.now(),
     'email': ['sadaf98x@gmail.com'],
     'email_on_failure': False,
     'email_on_retry': False,
@@ -20,14 +19,10 @@ dag = DAG(
     'user_automation',
     default_args=default_args,
     description='User Automation',
-    schedule_interval=timedelta(days=1)
+    schedule=timedelta(days=1)
 )
 
-#Task definition block
-streaming_data = PythonOperator(
-    task_id='stream_data_from_api',
-    python_callable=stream_data
-)
+#Task ÷
 
 def stream_data():
     import json
