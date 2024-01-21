@@ -23,3 +23,15 @@ dag = DAG(
     schedule_interval=timedelta(days=1)
 )
 
+#Task definition block
+streaming_data = PythonOperator(
+    task_id='stream_data_from_api',
+    python_callable=stream_data
+)
+
+def stream_data():
+    import json
+    import requests
+
+    res = requests.get("https://randomuser.me/api/")
+    res.json()
