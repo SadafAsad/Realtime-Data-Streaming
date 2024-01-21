@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+import pandas as pd
 
 #DAG arguments block
 default_args = {
@@ -22,12 +23,13 @@ dag = DAG(
     schedule=timedelta(days=1)
 )
 
-#Task ÷
+def get_data():
+    import requests
+    res = requests.get("https://randomuser.me/api/")
+    return res.json()['results'][0]
+
+def format_data(res):
+    return(pd.json_normalize(res))
 
 def stream_data():
-    import json
-    import requests
-
-    res = requests.get("https://randomuser.me/api/")
-    res = res.json()['results'][0]
-    # print(json.dumps(res, indent=3))
+    return format_data(get_data())
