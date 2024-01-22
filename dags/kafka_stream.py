@@ -7,6 +7,7 @@ from kafka import KafkaProducer
 import time
 import json
 import uuid
+import logging
 
 def get_data():
     res = requests.get("https://randomuser.me/api/")
@@ -33,9 +34,20 @@ def format_data(res):
     return data
 
 def stream_data():
-    res =  format_data(get_data())
     producer = KafkaProducer(bootstrap_servers=['broker:29092'], max_block_ms=5000)
-    producer.send('users_created', json.dumps(res).encode('utf-8'))
+
+    current_time = time.time()
+    while True:
+        # streaming for 1 minutes
+        if time.time() > current_time+60: 
+            break
+        try:
+            res =  format_data(get_data())
+            producer.send('users_created', json.dumps(res).encode('utf-8'))
+        except Exception as e:
+            # even if there is an error just log it and continue
+            logging.error(f'An error occured: {e}')
+            continue
 
 # DAG arguments block
 default_args = {
