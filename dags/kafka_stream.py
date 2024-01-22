@@ -34,7 +34,7 @@ def format_data(res):
 
 def stream_data():
     res =  format_data(get_data())
-    producer = KafkaProducer(bootstrap_servers=['localhost:9092'], max_block_ms=5000)
+    producer = KafkaProducer(bootstrap_servers=['broker:29092'], max_block_ms=5000)
     producer.send('users_created', json.dumps(res).encode('utf-8'))
 
 # DAG arguments block
@@ -50,7 +50,7 @@ default_args = {
 
 # DAG definition block
 dag = DAG(
-    'kafka_stream',
+    'user_automation',
     default_args=default_args,
     description='User Automation',
     schedule=timedelta(days=1)
