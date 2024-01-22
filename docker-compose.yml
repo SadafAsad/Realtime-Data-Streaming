@@ -111,7 +111,7 @@ services:
         condition: service_healthy
     volumes:
       - ./dags:/opt/airflow/dags
-      # - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
+      - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
       - ./requirements.txt:/opt/airflow/requirements.txt
     environment:
       - LOAD_EX=n
