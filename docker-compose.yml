@@ -104,6 +104,19 @@ services:
       timeout: 10s
       retries: 5
 
+  postgres:
+    image: postgres:14.0
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - confluent
+      
   webserver:
     image: apache/airflow:2.6.0-python3.9
     command: webserver
