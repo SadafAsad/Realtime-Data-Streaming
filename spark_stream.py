@@ -62,8 +62,8 @@ def create_spark_connection():
     try:
         spark_session = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config('spark.jars.packages', 'com.datastax.spark:spark-cassandra-connector_2.13:3.4.1,'
-                                            'org.apache.spark:spark-sql-kafka-0-10_2.13:3.4.1') \
+            .config('spark.jars.packages', 'com.datastax.spark:spark-cassandra-connector_2.12:3.4.1,'
+                                            'org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0') \
             .config('spark.cassandra.connection.host', 'localhost') \
             .getOrCreate()
         
@@ -84,20 +84,19 @@ def create_cassandra_connection():
         logging.error(f"Couldn't create cassandra connection due to: {e}")
         return None
 
-def connect_to_kafka(spark_connection):
-    spark_df = None
+def connect_to_kafka(spark_conn):
     try:
-        spark_df = spark_connection.readStream \
+        spark_df = spark_conn.readStream \
             .format('kafka') \
             .option('kafka.bootstrap.servers', 'localhost:9092') \
             .option('subscribe', 'users_created') \
             .option('startingOffsets', 'earliest') \
             .load()
         logging.info("kafka dataframe created successfully")
+        return spark_df
     except Exception as e:
         logging.warning(f"kafka dataframe could not be created because: {e}")
-
-    return spark_df
+        return None
 
 def create_selection_df_from_kafka(spark_df):
     schema = StructType([
@@ -124,18 +123,19 @@ if __name__ == "__main__":
     spark_connection = create_spark_connection()
     if spark_connection is not None:
         spark_df = connect_to_kafka(spark_connection)
-        selection_df = create_selection_df_from_kafka(spark_df)
+        if spark_df is not None:
+            selection_df = create_selection_df_from_kafka(spark_df)
 
-        session = create_cassandra_connection()
-        if session is not None:
-            create_keyspace(session)
-            create_table(session)
-            # insert_data(session)
+            session = create_cassandra_connection()
+            if session is not None:
+                create_keyspace(session)
+                create_table(session)
+                # insert_data(session)
 
-            streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
-                               .option('checkpointLocation', '/tmp/checkpoint')
-                               .option('keyspace', 'spark_streams')
-                               .option('table', 'created_users')
-                               .start())
+                streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
+                                .option('checkpointLocation', '/tmp/checkpoint')
+                                .option('keyspace', 'spark_streams')
+                                .option('table', 'created_users')
+                                .start())
 
-            streaming_query.awaitTermination()
+                streaming_query.awaitTermination()
