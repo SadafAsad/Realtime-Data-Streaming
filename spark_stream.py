@@ -15,10 +15,12 @@ def insert_data(session, **kwargs):
     pass
 
 def create_spark_connection():
+    spark_session = None
+    
     try:
         spark_session = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config('spark.jars.packages', 'com.datastax.spark:spark-cassandra-connector_2.13:3.41,'
+            .config('spark.jars.packages', 'com.datastax.spark:spark-cassandra-connector_2.13:3.4.1,'
                                             'org.apache.spark:spark-sql-kafka-0-10_2.13:3.4.1') \
             .config('spark.cassandra.connection.host', 'localhost') \
             .getOrCreate()
