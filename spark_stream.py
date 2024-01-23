@@ -6,10 +6,28 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col
 
 def create_keyspace(session):
-    pass
+    session.execute("""
+        CREATE KEYSPACE IF NOT EXISTS spark_streams
+        WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};
+    """)
+    print("Keyspace created successfully!")
 
 def create_table(session):
-    pass
+    session.execute("""
+    CREATE TABLE IF NOT EXISTS spark_streams.created_users (
+        id UUID PRIMARY KEY,
+        first_name TEXT,
+        last_name TEXT,
+        gender TEXT,
+        address TEXT,
+        post_code TEXT,
+        email TEXT,
+        username TEXT,
+        registered_date TEXT,
+        phone TEXT,
+        picture TEXT);
+    """)
+    print("Table created successfully!")
 
 def insert_data(session, **kwargs):
     pass
@@ -43,4 +61,7 @@ def create_cassandra_connection():
 if __name__ == "__main__":
     spark_connection = create_spark_connection()
     if spark_connection is not None:
-        session = create_cassandra_connection
+        session = create_cassandra_connection()
+        if session is not None:
+            create_keyspace(session)
+            create_table(session)
