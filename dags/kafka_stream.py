@@ -1,13 +1,11 @@
-from datetime import datetime
-from datetime import timedelta
-from airflow import DAG
 from airflow.operators.python import PythonOperator
-import requests
+from airflow import DAG
 from kafka import KafkaProducer
 import time
 import json
 import uuid
 import logging
+import requests
 
 def get_data():
     res = requests.get("https://randomuser.me/api/")
@@ -43,7 +41,7 @@ def stream_data():
             break
         try:
             res =  format_data(get_data())
-            producer.send('users_created', json.dumps(res).encode('utf-8'))
+            producer.send('users_info', json.dumps(res).encode('utf-8'))
         except Exception as e:
             # even if there is an error just log it and continue
             logging.error(f'An error occured: {e}')
@@ -53,7 +51,7 @@ def stream_data():
 default_args = {
     'owner': 'Sadaf Asadollahi',
     'start_date': datetime.now(),
-    'email': ['sadaf98x@gmail.com'],
+    'email': ['sadaf@sdf.com'],
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
@@ -68,8 +66,8 @@ dag = DAG(
     schedule=timedelta(days=1)
 )
 
-# Task definition block
-stream_data = PythonOperator(
+# Tasks definition block
+streaming_task = PythonOperator(
     task_id='stream_data_from_api',
     python_callable=stream_data,
     dag=dag
