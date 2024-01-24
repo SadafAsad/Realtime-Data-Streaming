@@ -1,6 +1,7 @@
 from airflow.operators.python import PythonOperator
 from airflow import DAG
 from kafka import KafkaProducer
+from datetime import datetime, timedelta
 import time
 import json
 import uuid
