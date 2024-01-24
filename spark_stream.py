@@ -1,24 +1,23 @@
-import logging
-from datetime import datetime
-from cassandra.auth import PlainTextAuthProvider
-from cassandra.cluster import Cluster
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col
 from pyspark.sql.types import StructType, StructField, StringType
+from pyspark.sql.functions import from_json, col
+from pyspark.sql import SparkSession
+from cassandra.cluster import Cluster
+import logging
 
 def create_keyspace(session):
     session.execute("""
-        CREATE KEYSPACE IF NOT EXISTS spark_streams
+        CREATE KEYSPACE IF NOT EXISTS user_stream
         WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};
     """)
-    print("Keyspace created successfully!")
+    print("--- Keyspace Created Successfully ---")
 
 def create_table(session):
     session.execute("""
-    CREATE TABLE IF NOT EXISTS spark_streams.created_users (
+    CREATE TABLE IF NOT EXISTS user_stream.users_info (
         id UUID PRIMARY KEY,
         first_name TEXT,
         last_name TEXT,
+        birthdate TEXT,
         gender TEXT,
         address TEXT,
         post_code TEXT,
@@ -28,35 +27,34 @@ def create_table(session):
         phone TEXT,
         picture TEXT);
     """)
-    print("Table created successfully!")
+    print("--- Table Created Successfully ---")
 
-def insert_data(session, **kwargs):
-    print("inserting data...")
-    
-    user_id = kwargs.get('id')
-    first_name = kwargs.get('first_name')
-    last_name = kwargs.get('last_name')
-    gender = kwargs.get('gender')
-    address = kwargs.get('address')
-    postcode = kwargs.get('post_code')
-    email = kwargs.get('email')
-    username = kwargs.get('username')
-    dob = kwargs.get('dob')
-    registered_date = kwargs.get('registered_date')
-    phone = kwargs.get('phone')
-    picture = kwargs.get('picture')
+# def insert_data(session, **kwargs):
+#     user_id = kwargs.get('id')
+#     first_name = kwargs.get('first_name')
+#     last_name = kwargs.get('last_name')
+#     birthdate = kwargs.get('dob')
+#     gender = kwargs.get('gender')
+#     address = kwargs.get('address')
+#     postcode = kwargs.get('post_code')
+#     email = kwargs.get('email')
+#     username = kwargs.get('username')
+#     dob = kwargs.get('dob')
+#     registered_date = kwargs.get('registered_date')
+#     phone = kwargs.get('phone')
+#     picture = kwargs.get('picture')
 
-    try:
-        session.execute("""
-            INSERT INTO spark_streams.created_users(id, first_name, last_name, gender, address, 
-                post_code, email, username, dob, registered_date, phone, picture)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (user_id, first_name, last_name, gender, address,
-              postcode, email, username, dob, registered_date, phone, picture))
-        logging.info(f"Data inserted for {first_name} {last_name}")
+#     try:
+#         session.execute("""
+#             INSERT INTO user_stream.users_info(id, first_name, last_name, birthdate, gender, address, 
+#                 post_code, email, username, dob, registered_date, phone, picture)
+#                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+#         """, (user_id, first_name, last_name, birthdate, gender, address,
+#               postcode, email, username, dob, registered_date, phone, picture))
+#         logging.info(f"Data inserted for {user_id} {username}")
 
-    except Exception as e:
-        logging.error(f'could not insert data due to {e}')
+#     except Exception as e:
+#         logging.error(f'FAILED to insert data: {e}')
 
 def create_spark_connection():
     try:
@@ -68,11 +66,11 @@ def create_spark_connection():
             .getOrCreate()
         
         spark_session.sparkContext.setLogLevel('ERROR')
-        logging.info('Spark connection created successfully')
+        logging.info('--- Spark Connection Created Successfully ---')
         return spark_session
 
     except Exception as e:
-        logging.error(f"Couldn't create spark session due to: {e}")
+        logging.error(f"FAILED to create Spark session: {e}")
         return None
 
 def create_cassandra_connection():
@@ -81,7 +79,7 @@ def create_cassandra_connection():
         cluster = Cluster(['localhost'])
         return cluster.connect()
     except Exception as e:
-        logging.error(f"Couldn't create cassandra connection due to: {e}")
+        logging.error(f"FAILED to create Cassandra connection: {e}")
         return None
 
 def connect_to_kafka(spark_conn):
@@ -89,13 +87,13 @@ def connect_to_kafka(spark_conn):
         spark_df = spark_conn.readStream \
             .format('kafka') \
             .option('kafka.bootstrap.servers', 'localhost:9092') \
-            .option('subscribe', 'users_created') \
+            .option('subscribe', 'users_info') \
             .option('startingOffsets', 'earliest') \
             .load()
-        logging.info("kafka dataframe created successfully")
+        logging.info("--- Kafka Dataframe Created Successfully ---")
         return spark_df
     except Exception as e:
-        logging.warning(f"kafka dataframe could not be created because: {e}")
+        logging.warning(f"FAILED to create Kafka dataframe: {e}")
         return None
 
 def create_selection_df_from_kafka(spark_df):
@@ -103,6 +101,7 @@ def create_selection_df_from_kafka(spark_df):
         StructField("id", StringType(), False),
         StructField("first_name", StringType(), False),
         StructField("last_name", StringType(), False),
+        StructField("birthdate", StringType(), False),
         StructField("gender", StringType(), False),
         StructField("address", StringType(), False),
         StructField("post_code", StringType(), False),
@@ -134,8 +133,8 @@ if __name__ == "__main__":
 
                 streaming_query = (selection_df.writeStream.format("org.apache.spark.sql.cassandra")
                                 .option('checkpointLocation', '/tmp/checkpoint')
-                                .option('keyspace', 'spark_streams')
-                                .option('table', 'created_users')
+                                .option('keyspace', 'user_stream')
+                                .option('table', 'users_info')
                                 .start())
 
                 streaming_query.awaitTermination()
