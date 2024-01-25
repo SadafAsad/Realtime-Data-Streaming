@@ -6,12 +6,6 @@ This project aims to simulate a live data streaming pipeline for collecting, tra
 </p>
 -->
 
-## Table of Contents
-
-- [System Architecture](#system-architecture)
-- [Technologies](#technologies)
-- [Acknowledgments](#acknowledgments)
-
 ## System Architecture
 - Data Collection: [randomuser.me](https://randomuser.me/) API serves as the source of raw data
 - Data Transformation: Python is employed for transforming raw data into the required format
@@ -23,8 +17,6 @@ This project aims to simulate a live data streaming pipeline for collecting, tra
   * Schema Registry: Manages schema evolution and compatibility in the Kafka topics
 - Spark: Configured with a master and a worker to subscribe to Kafka consumer and process data. 
 - Cassandra: Used as the destination storage.
-
-## Technologies
 
 ## Achnowledgments
 Thanks for providing inspiration and code snippets: 
