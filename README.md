@@ -27,4 +27,7 @@ This project aims to simulate a live data streaming pipeline for collecting, tra
 ## Technologies
 
 ## Achnowledgments
+Thanks for providing inspiration and code snippets: 
+
+[e2e-data-engineering](https://github.com/airscholar/e2e-data-engineering) developed by [Yusuf Ganiyu](https://github.com/airscholar)
 
